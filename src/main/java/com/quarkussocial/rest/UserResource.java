@@ -1,8 +1,12 @@
 package com.quarkussocial.rest;
 
 import com.quarkussocial.domain.modal.User;
+import com.quarkussocial.domain.repository.UserRepository;
 import com.quarkussocial.rest.dto.CreateUserRequest;
+import com.quarkussocial.rest.dto.ResponseError;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Validator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -12,20 +16,33 @@ import jakarta.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class UserResource {
 
+    @Inject
+    private UserRepository userRepository;
+
+    @Inject
+    private Validator validator;
+
+
     @POST
     @Transactional
     public Response createUser(CreateUserRequest createUserRequest) {
+        var validations = validator.validate(createUserRequest);
+        if (!validations.isEmpty()) {
+            ResponseError responseError = ResponseError.createFromValidation(validations);
+            return Response.status(Response.Status.BAD_REQUEST).entity(responseError).build();
+        }
+
         User user = new User();
         user.setName(createUserRequest.getName());
         user.setAge(createUserRequest.getAge());
-        user.persist();
+        userRepository.persist(user);
 
-        return Response.ok(user).build();
+        return Response.status(Response.Status.CREATED).entity(user).build();
     }
 
     @GET
     public Response listAllUsers() {
-        var users = User.findAll();
+        var users = userRepository.findAll();
         return Response.ok(users.list()).build();
     }
 
@@ -33,10 +50,10 @@ public class UserResource {
     @Path("/{id}")
     @Transactional
     public Response deleteUser(@PathParam("id") Long id) {
-        User user = User.findById(id);
+        User user = userRepository.findById(id);
         if (user != null) {
-            user.delete();
-            return Response.ok().build();
+            userRepository.delete(user);
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
         return Response.status(Response.Status.NOT_FOUND).build();
 
@@ -46,12 +63,11 @@ public class UserResource {
     @Path("/{id}")
     @Transactional
     public Response updateUser(@PathParam("id") Long id, CreateUserRequest userData) {
-        User user=User.findById(id);
-        if(user!=null){
+        User user = userRepository.findById(id);
+        if (user != null) {
             user.setAge(userData.getAge());
-            user.setName(user.getName());
-
-            return Response.ok().build();
+            user.setName(userData.getName());
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
         return Response.status(Response.Status.NOT_FOUND).build();
     }
