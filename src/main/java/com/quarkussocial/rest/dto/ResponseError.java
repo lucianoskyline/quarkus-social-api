@@ -1,12 +1,14 @@
 package com.quarkussocial.rest.dto;
 
 import jakarta.validation.ConstraintViolation;
+import lombok.Data;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Data
 public class ResponseError {
 
     private String message;
@@ -27,20 +29,4 @@ public class ResponseError {
         return responseError;
     }
 
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Collection<FieldError> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(Collection<FieldError> errors) {
-        this.errors = errors;
-    }
 }
