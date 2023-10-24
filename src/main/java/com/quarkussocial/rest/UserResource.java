@@ -1,6 +1,6 @@
 package com.quarkussocial.rest;
 
-import com.quarkussocial.domain.modal.User;
+import com.quarkussocial.domain.model.User;
 import com.quarkussocial.domain.repository.UserRepository;
 import com.quarkussocial.rest.dto.CreateUserRequest;
 import com.quarkussocial.rest.dto.ResponseError;

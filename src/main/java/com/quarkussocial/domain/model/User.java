@@ -1,4 +1,4 @@
-package com.quarkussocial.domain.modal;
+package com.quarkussocial.domain.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
