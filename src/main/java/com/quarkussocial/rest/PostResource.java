@@ -2,6 +2,7 @@ package com.quarkussocial.rest;
 
 import com.quarkussocial.domain.model.Post;
 import com.quarkussocial.domain.model.User;
+import com.quarkussocial.domain.repository.FollowerRepository;
 import com.quarkussocial.domain.repository.PostRepository;
 import com.quarkussocial.domain.repository.UserRepository;
 import com.quarkussocial.rest.dto.CreatePostRequest;
@@ -13,8 +14,6 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Path("/users/{userId}/posts")
@@ -27,6 +26,9 @@ public class PostResource {
 
     @Inject
     private PostRepository postRepository;
+
+    @Inject
+    private FollowerRepository followerRepository;
 
 
     @POST
@@ -46,11 +48,25 @@ public class PostResource {
     }
 
     @GET
-    public Response listPosts(@PathParam("userId") Long userId) {
+    public Response listPosts(@PathParam("userId") Long userId, @HeaderParam("followerId") Long followerId) {
         User user = userRepository.findById(userId);
         if (user == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        if (followerId == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("You forgot the header followerId").build();
+        }
+
+        var follower = userRepository.findById(followerId);
+        if (follower == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        if (followerRepository.followers(follower, user)) {
+            return Response.status(Response.Status.FORBIDDEN).entity("You can't see these posts").build();
+        }
+
         var postsQuery = postRepository.find("user",
                 Sort.by("datetime", Sort.Direction.Descending), user);
         var posts = postsQuery.list().stream().map(PostResponse::fromEntity)
